@@ -226,7 +226,7 @@ const Connect4: React.FC = () => {
 
     return (
         <div className="game-container">
-            <style jsx global>{`
+            <style>{`
         :root {
           --cell-size: clamp(42px, 10vmin, 60px);
           --gap-size: clamp(6px, 1.5vmin, 8px);
@@ -596,7 +596,8 @@ background: linear-gradient(90deg, rgba(9, 11, 10, 1.000) 0.000%, rgba(9, 11, 10
             transform: scale(0.95);
           }
         }
-      `}</style>
+      `}
+            </style>
 
             <h1 className="title">CONNECT 4</h1>
 
