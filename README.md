@@ -14,11 +14,11 @@
 ## Run it locally
 - clone the link in the your dir 
 ```bash
-git clone link
+git clone https://github.com/ImmanuelJoya/Connect4.git
 ```
 - Install packages 
 ```bash
-npn i
+npm i
 ```
  ```bash
 npm run dev
