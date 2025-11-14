@@ -8,7 +8,7 @@
 ## Future update 
 - Sound effects
 - Single player bot difficulty option
-- User registration and guest mode
+- User auth and guest mode
 - Theme
 --------------------------------------
 ## Run it locally
