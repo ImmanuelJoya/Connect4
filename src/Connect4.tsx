@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaGithub } from 'react-icons/fa';
+import dropSound from './connect4drop.mp3';
 
 type Player = '🔴' | '🟡' | null;
 type Board = Player[][];
@@ -32,9 +33,42 @@ const Connect4: React.FC = () => {
     animatingPiece: null
   });
 
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    const saved = localStorage.getItem('connect4-muted');
+    return saved === 'true';
+  });
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio(dropSound);
+    audioRef.current.volume = 0.3;
+    audioRef.current.muted = isMuted;
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+    }
+    localStorage.setItem('connect4-muted', isMuted.toString());
+  }, [isMuted]);
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
+
+  const playDropSound = useCallback(() => {
+    if (!audioRef.current || isMuted) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(err => {
+      console.warn('Sound playback failed:', err);
+    });
+  }, [isMuted]);
+
   const getBotMove = useCallback((board: Board, botPlayer: Player): number => {
     const opponent = botPlayer === '🔴' ? '🟡' : '🔴';
 
+    // Win check
     for (let col = 0; col < COLS; col++) {
       const testBoard = board.map(row => [...row]);
       const row = getLowestEmptyRow(testBoard, col);
@@ -46,6 +80,7 @@ const Connect4: React.FC = () => {
       }
     }
 
+    // Block opponent win
     for (let col = 0; col < COLS; col++) {
       const testBoard = board.map(row => [...row]);
       const row = getLowestEmptyRow(testBoard, col);
@@ -57,6 +92,7 @@ const Connect4: React.FC = () => {
       }
     }
 
+    // Center priority
     const centerCols = [3, 2, 4, 1, 5, 0, 6];
     for (const col of centerCols) {
       if (getLowestEmptyRow(board, col) !== -1) {
@@ -64,6 +100,7 @@ const Connect4: React.FC = () => {
       }
     }
 
+    // Random fallback
     const validCols = [];
     for (let col = 0; col < COLS; col++) {
       if (getLowestEmptyRow(board, col) !== -1) {
@@ -85,10 +122,10 @@ const Connect4: React.FC = () => {
     if (!player) return false;
 
     const directions = [
-      [[0, 1], [0, -1]],
-      [[1, 0], [-1, 0]],
-      [[1, 1], [-1, -1]],
-      [[1, -1], [-1, 1]]
+      [[0, 1], [0, -1]],  // Horizontal
+      [[1, 0], [-1, 0]],  // Vertical
+      [[1, 1], [-1, -1]], // Diagonal \
+      [[1, -1], [-1, 1]]  // Diagonal /
     ];
 
     for (const direction of directions) {
@@ -144,6 +181,7 @@ const Connect4: React.FC = () => {
     if (row === -1) return;
 
     setGameState(prev => ({ ...prev, animatingPiece: { row, col } }));
+    playDropSound();
 
     setTimeout(() => {
       newBoard[row][col] = gameState.currentPlayer;
@@ -161,7 +199,7 @@ const Connect4: React.FC = () => {
         isBotThinking: prev.gameMode === 'single-player' && !isGameOver && nextPlayer === '🟡'
       }));
     }, 600);
-  }, [gameState, checkWinner]);
+  }, [gameState, checkWinner, playDropSound]);
 
   useEffect(() => {
     if (!gameState.isBotThinking || gameState.winner) return;
@@ -172,6 +210,7 @@ const Connect4: React.FC = () => {
       if (row === -1) return;
 
       setGameState(prev => ({ ...prev, animatingPiece: { row, col: botMove } }));
+      playDropSound();
 
       setTimeout(() => {
         setGameState(prev => {
@@ -196,7 +235,7 @@ const Connect4: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [gameState.isBotThinking, gameState.board, getBotMove, checkWinner]);
+  }, [gameState.isBotThinking, gameState.board, getBotMove, checkWinner, playDropSound]);
 
   const resetGame = () => {
     setGameState(prev => ({
@@ -227,7 +266,6 @@ const Connect4: React.FC = () => {
 
   return (
     <div className="game-container">
-
       <nav>
         <h1 className="title">CONNECT 4</h1>
         <a
@@ -242,6 +280,7 @@ const Connect4: React.FC = () => {
           </div>
         </a>
       </nav>
+
       <div className="mode-selector">
         <button
           className={`mode-button ${gameState.gameMode === 'two-player' ? 'active' : ''}`}
@@ -304,6 +343,15 @@ const Connect4: React.FC = () => {
 
       <button onClick={resetGame} className="reset-button">
         NEW GAME
+      </button>
+
+      <button
+        onClick={toggleMute}
+        className="mute-button"
+        aria-label={isMuted ? 'Unmute' : 'Mute'}
+        title={isMuted ? 'Unmute' : 'Mute'}
+      >
+        {isMuted ? '🔇' : '🔊'}
       </button>
     </div>
   );
