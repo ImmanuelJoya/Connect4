@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { FaGithub } from 'react-icons/fa';
 
 type Player = '🔴' | '🟡' | null;
 type Board = Player[][];
@@ -599,8 +600,20 @@ background: linear-gradient(90deg, rgba(9, 11, 10, 1.000) 0.000%, rgba(9, 11, 10
       `}
             </style>
 
-            <h1 className="title">CONNECT 4</h1>
-
+ <nav>
+        <h1 className="title">CONNECT 4</h1>
+        <a
+          href="https://github.com/ImmanuelJoya/Connect4.git"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed top-5 right-5 z-50 text-slate-200 hover:text-white transition-all duration-300 group opacity-80 hover:opacity-100"
+          aria-label="View on GitHub"
+        >
+          <div className="p-2 rounded-full bg-slate-800/50 backdrop-blur-sm group-hover:bg-slate-700/70 transition-colors duration-300">
+            <FaGithub className="text-3xl md:text-4xl hover:scale-110 transition-transform duration-300" />
+          </div>
+        </a>
+      </nav>
             <div className="mode-selector">
                 <button
                     className={`mode-button ${gameState.gameMode === 'two-player' ? 'active' : ''}`}

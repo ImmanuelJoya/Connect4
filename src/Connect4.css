@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * {
   box-sizing: border-box;
 }
@@ -231,6 +233,7 @@ h1 {
 
 .reset-button {
   margin-top: 30px;
+  margin-bottom: 10px;
   padding: 14px 40px;
   font-size: 18px;
   font-weight: 600;
