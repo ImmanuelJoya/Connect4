@@ -26,6 +26,6 @@ npm run dev
 --------------------------------------
 ## live on 
 ```bash 
-https://connect-4-cz3b.onrender.com/
+https://connect-4-cz3b.onrender.com
 ```
 
