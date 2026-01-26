@@ -357,4 +357,4 @@ const Connect4: React.FC = () => {
   );
 };
 
-export default Connect4;
+export default Connect4; 
