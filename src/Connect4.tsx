@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaGithub } from 'react-icons/fa';
-import dropSound from './connect4drop.mp3';
+import dropSound from './connect4drop.mp3'; 
 
 type Player = '🔴' | '🟡' | null;
 type Board = Player[][];
