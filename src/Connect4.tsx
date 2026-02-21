@@ -1,36 +1,48 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaGithub } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Trophy,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  Users,
+  Bot,
+  Sparkles,
+  Timer,
+  Target
+} from 'lucide-react';
+import type { Player, GameMode, GameStats, Position, Board } from './uitilities/types';
+import { ROWS, COLS } from './uitilities/types';
+import { Connect4AI } from './uitilities/ai';
+import { useSound } from './uitilities/sound';
 import dropSound from './connect4drop.mp3';
+import './Connect4.css';
 
-type Player = '🔴' | '🟡' | null;
-type Board = Player[][];
-type GameMode = 'two-player' | 'single-player';
+const Connect4Pro: React.FC = () => {
+  // Game State
+  const [board, setBoard] = useState<Board>(() =>
+    Array(ROWS).fill(null).map(() => Array(COLS).fill(null))
+  );
+  const [currentPlayer, setCurrentPlayer] = useState<Player>('red');
+  const [gameMode, setGameMode] = useState<GameMode>('pvp');
+  const [gameState, setGameState] = useState<'playing' | 'won' | 'draw'>('playing');
+  const [winner, setWinner] = useState<Player>(null);
+  const [winningLine, setWinningLine] = useState<Position[]>([]);
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [dropPosition, setDropPosition] = useState<{ col: number; row: number } | null>(null);
 
-interface GameState {
-  board: Board;
-  currentPlayer: Player;
-  winner: Player;
-  winningLine: [number, number][] | null;
-  gameMode: GameMode;
-  isBotThinking: boolean;
-  animatingPiece: { row: number; col: number } | null;
-}
-
-const ROWS = 6;
-const COLS = 7;
-
-const Connect4: React.FC = () => {
-  const initializeBoard = (): Board =>
-    Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
-
-  const [gameState, setGameState] = useState<GameState>({
-    board: initializeBoard(),
-    currentPlayer: '🔴',
-    winner: null,
-    winningLine: null,
-    gameMode: 'two-player',
-    isBotThinking: false,
-    animatingPiece: null
+  // Stats & Settings
+  const [stats, setStats] = useState<GameStats>(() => {
+    const saved = localStorage.getItem('connect4-stats');
+    return saved ? JSON.parse(saved) : {
+      redWins: 0,
+      yellowWins: 0,
+      draws: 0,
+      totalGames: 0,
+      currentStreak: 0,
+      bestStreak: 0
+    };
   });
 
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -468,4 +480,4 @@ const Connect4: React.FC = () => {
   );
 };
 
-export default Connect4;
+export default Connect4Pro;
