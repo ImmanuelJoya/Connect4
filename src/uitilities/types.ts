@@ -1,4 +1,5 @@
 export type Player = 'red' | 'yellow' | null;
+export type Board = Player[][];
 export type GameMode = 'pvp' | 'ai-easy' | 'ai-medium' | 'ai-hard';
 export type GameState = 'playing' | 'won' | 'draw' | 'paused';
 

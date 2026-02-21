@@ -16,7 +16,7 @@ import type { Player, GameMode, GameStats, Position} from './uitilities/types';
 import {ROWS, COLS} from './uitilities/types';
 import { Connect4AI } from './uitilities/ai';
 import { SoundEngine } from './uitilities/sound';
-import './Connect4Pro.css';
+import './Connect4.css';
 
 const Connect4Pro: React.FC = () => {
   // Game State
