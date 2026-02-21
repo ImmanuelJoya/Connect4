@@ -12,9 +12,10 @@ import {
   Timer,
   Target
 } from 'lucide-react';
-import { Player, GameMode, GameStats, Position, ROWS, COLS } from './uitilities/types';
+import type { Player, GameMode, GameStats, Position} from './uitilities/types';
+import {ROWS, COLS} from './uitilities/types';
 import { Connect4AI } from './uitilities/ai';
-import { SoundEngine } from './sound';
+import { SoundEngine } from './uitilities/sound';
 import './Connect4Pro.css';
 
 const Connect4Pro: React.FC = () => {
@@ -55,7 +56,7 @@ const Connect4Pro: React.FC = () => {
   // Refs
   const soundEngine = useRef<SoundEngine>(new SoundEngine());
   const ai = useRef<Connect4AI | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize AI based on mode
   useEffect(() => {
