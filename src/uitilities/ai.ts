@@ -1,4 +1,5 @@
-import { Player, Board, Position, ROWS, COLS } from './types';
+import type { Player, Board, Position } from './types';
+import {ROWS, COLS} from './types';
 
 export class Connect4AI {
     private readonly maxDepth: number;
