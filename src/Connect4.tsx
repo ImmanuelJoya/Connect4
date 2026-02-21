@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Trophy, 
-  RotateCcw, 
-  Volume2, 
-  VolumeX, 
-  Users, 
-  Bot, 
-  ChevronDown,
+import {
+  Trophy,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  Users,
+  Bot,
   Sparkles,
   Timer,
   Target
 } from 'lucide-react';
-import type { Player, GameMode, GameStats, Position} from './uitilities/types';
-import {ROWS, COLS} from './uitilities/types';
+import type { Player, GameMode, GameStats, Position, Board } from './uitilities/types';
+import { ROWS, COLS } from './uitilities/types';
 import { Connect4AI } from './uitilities/ai';
-import { SoundEngine } from './uitilities/sound';
+import { useSound } from './uitilities/sound';
+import dropSound from './connect4drop.mp3';
 import './Connect4.css';
 
 const Connect4Pro: React.FC = () => {
   // Game State
-  const [board, setBoard] = useState<Player[][]>(() => 
+  const [board, setBoard] = useState<Board>(() =>
     Array(ROWS).fill(null).map(() => Array(COLS).fill(null))
   );
   const [currentPlayer, setCurrentPlayer] = useState<Player>('red');
@@ -31,7 +31,7 @@ const Connect4Pro: React.FC = () => {
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [dropPosition, setDropPosition] = useState<{ col: number; row: number } | null>(null);
-  
+
   // Stats & Settings
   const [stats, setStats] = useState<GameStats>(() => {
     const saved = localStorage.getItem('connect4-stats');
@@ -44,19 +44,21 @@ const Connect4Pro: React.FC = () => {
       bestStreak: 0
     };
   });
-  
+
   const [soundEnabled, setSoundEnabled] = useState(() => {
     return localStorage.getItem('connect4-sound') !== 'false';
   });
-  
+
   const [showHints, setShowHints] = useState(false);
   const [moveHistory, setMoveHistory] = useState<Position[]>([]);
   const [gameTime, setGameTime] = useState(0);
-  
+
+  // Sound hook - using your MP3
+  const { play: playDropSound } = useSound(dropSound, !soundEnabled);
+
   // Refs
-  const soundEngine = useRef<SoundEngine>(new SoundEngine());
   const ai = useRef<Connect4AI | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialize AI based on mode
   useEffect(() => {
@@ -80,9 +82,8 @@ const Connect4Pro: React.FC = () => {
     };
   }, [gameState]);
 
-  // Sound toggle
+  // Save sound preference
   useEffect(() => {
-    soundEngine.current.setEnabled(soundEnabled);
     localStorage.setItem('connect4-sound', soundEnabled.toString());
   }, [soundEnabled]);
 
@@ -91,14 +92,14 @@ const Connect4Pro: React.FC = () => {
     localStorage.setItem('connect4-stats', JSON.stringify(stats));
   }, [stats]);
 
-  const getLowestEmptyRow = useCallback((boardState: Player[][], col: number): number => {
+  const getLowestEmptyRow = useCallback((boardState: Board, col: number): number => {
     for (let row = ROWS - 1; row >= 0; row--) {
       if (boardState[row][col] === null) return row;
     }
     return -1;
   }, []);
 
-  const checkWinner = useCallback((boardState: Player[][], row: number, col: number): Position[] | null => {
+  const checkWinner = useCallback((boardState: Board, row: number, col: number): Position[] | null => {
     const player = boardState[row][col];
     if (!player) return null;
 
@@ -111,7 +112,7 @@ const Connect4Pro: React.FC = () => {
 
     for (const direction of directions) {
       const line: Position[] = [{ row, col }];
-      
+
       for (const [dr, dc] of direction) {
         let r = row + dr;
         let c = col + dc;
@@ -121,43 +122,41 @@ const Connect4Pro: React.FC = () => {
           c += dc;
         }
       }
-      
+
       if (line.length >= 4) return line;
     }
     return null;
   }, []);
 
-  const isDraw = useCallback((boardState: Player[][]): boolean => {
+  const isDraw = useCallback((boardState: Board): boolean => {
     return boardState.every(row => row.every(cell => cell !== null));
   }, []);
 
   const makeMove = useCallback((col: number) => {
     if (gameState !== 'playing' || isAnimating) return;
-    
+
     const row = getLowestEmptyRow(board, col);
-    if (row === -1) {
-      soundEngine.current.playError();
-      return;
-    }
+    if (row === -1) return;
 
     setIsAnimating(true);
     setDropPosition({ col, row });
-    soundEngine.current.playDrop();
+    
+    // Play your MP3 sound
+    playDropSound();
 
     setTimeout(() => {
-      const newBoard = board.map(r => [...r]);
+      const newBoard: Board = board.map(r => [...r]);
       newBoard[row][col] = currentPlayer;
       setBoard(newBoard);
       setMoveHistory(prev => [...prev, { row, col }]);
-      
+
       const winLine = checkWinner(newBoard, row, col);
-      
+
       if (winLine) {
         setWinningLine(winLine);
         setWinner(currentPlayer);
         setGameState('won');
-        soundEngine.current.playWin();
-        
+
         setStats(prev => {
           const isRed = currentPlayer === 'red';
           const newStreak = isRed ? prev.currentStreak + 1 : 0;
@@ -181,11 +180,11 @@ const Connect4Pro: React.FC = () => {
       } else {
         setCurrentPlayer(prev => prev === 'red' ? 'yellow' : 'red');
       }
-      
+
       setDropPosition(null);
       setIsAnimating(false);
     }, 600);
-  }, [board, currentPlayer, gameState, isAnimating, getLowestEmptyRow, checkWinner, isDraw]);
+  }, [board, currentPlayer, gameState, isAnimating, getLowestEmptyRow, checkWinner, isDraw, playDropSound]);
 
   // AI Turn
   useEffect(() => {
@@ -225,7 +224,6 @@ const Connect4Pro: React.FC = () => {
 
   const getHint = useCallback(() => {
     if (!showHints || gameState !== 'playing') return null;
-    // Simple hint: find first winning move or block opponent
     const testAI = new Connect4AI('hard');
     return testAI.getBestMove(board);
   }, [showHints, gameState, board]);
@@ -237,30 +235,30 @@ const Connect4Pro: React.FC = () => {
       {/* Background Effects */}
       <div className="bg-grid" />
       <div className="bg-glow" />
-      
+
       {/* Header */}
       <header className="game-header">
         <div className="logo">
           <Sparkles className="logo-icon" />
           <h1>CONNECT<span className="accent">4</span> PRO</h1>
         </div>
-        
+
         <div className="header-controls">
-          <button 
+          <button
             className="icon-btn"
             onClick={() => setSoundEnabled(!soundEnabled)}
             title={soundEnabled ? 'Mute' : 'Unmute'}
           >
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
-          <a 
+          <a
             href="https://github.com/ImmanuelJoya/Connect4"
             target="_blank"
             rel="noopener noreferrer"
             className="icon-btn github"
           >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
             </svg>
           </a>
         </div>
@@ -397,7 +395,7 @@ const Connect4Pro: React.FC = () => {
                     const isWinning = winningLine.some(
                       pos => pos.row === rowIdx && pos.col === colIdx
                     );
-                    
+
                     return (
                       <div
                         key={colIdx}
@@ -408,14 +406,14 @@ const Connect4Pro: React.FC = () => {
                         <AnimatePresence>
                           {cell && (
                             <motion.div
-                              initial={dropPosition?.col === colIdx && dropPosition?.row === rowIdx ? 
-                                { y: -500, opacity: 0 } : { scale: 0 }}
+                              initial={dropPosition?.col === colIdx && dropPosition?.row === rowIdx ?
+                                { y: -400, opacity: 0, scale: 0.8 } : { scale: 0 }}
                               animate={{ y: 0, scale: 1, opacity: 1 }}
-                              transition={{ 
+                              transition={{
                                 type: "spring",
-                                stiffness: 300,
-                                damping: 20,
-                                delay: dropPosition?.col === colIdx && dropPosition?.row === rowIdx ? 0 : 0
+                                stiffness: 200,
+                                damping: 15,
+                                mass: 0.8
                               }}
                               className={`game-piece ${cell} ${isWinning ? 'winning' : ''}`}
                             >
@@ -438,7 +436,7 @@ const Connect4Pro: React.FC = () => {
               <RotateCcw size={18} />
               New Game
             </button>
-            <button 
+            <button
               className={`btn btn-secondary ${showHints ? 'active' : ''}`}
               onClick={() => setShowHints(!showHints)}
             >

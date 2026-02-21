@@ -10,7 +10,7 @@ export class Connect4AI {
         this.maxDepth = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 4 : 6;
         this.player = 'yellow';
         this.opponent = 'red';
-    }
+    } 
 
     getBestMove(board: Player[][]): number {
         let bestScore = -Infinity;
