@@ -141,7 +141,7 @@ const Connect4Pro: React.FC = () => {
     setIsAnimating(true);
     setDropPosition({ col, row });
     
-    // Play your MP3 sound
+    
     playDropSound();
 
     setTimeout(() => {
