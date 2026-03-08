@@ -53,7 +53,7 @@ const Connect4Pro: React.FC = () => {
   const [moveHistory, setMoveHistory] = useState<Position[]>([]);
   const [gameTime, setGameTime] = useState(0);
 
-  // Sound hook - using your MP3
+  
   const { play: playDropSound } = useSound(dropSound, !soundEnabled);
 
   // Refs
