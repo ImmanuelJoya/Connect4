@@ -17,7 +17,7 @@ import { Connect4AI } from './uitilities/ai';
 import { useSound } from './uitilities/sound';
 import dropSound from './connect4drop.mp3';
 import './Connect4.css';
-
+ 
 const Connect4Pro: React.FC = () => {
   // Game State
   const [board, setBoard] = useState<Board>(() =>
